@@ -63,19 +63,10 @@ def get_circles(image, radius, minPadding = None, radius_flex = 1, blur = False,
     detected_circles = np.uint16(np.around(detected_circles))[0, :]
     return [(a,b) for a,b,_ in detected_circles if image[b-1,a-1] > colorBoundry[0] and image[b-1,a-1] < colorBoundry[1]]
 
-if __name__ == "__main__":
-    # Testing Parameters
-    radius = 10
-    point_count = 2500
-    image_size = (2000,2000)
-    true_point_list,image = create_random_dot_image(image_size, radius, point_count)
-    # Actual code
-    circles = get_circles(image,radius)
-
-    # Calculate "Test score Accuracy"
-    # Rated from (0, 1), Asssociates guesses to closest true circles inside radius, losing percentage based on distance from center to edge.
-    # Additional Penalty for guesses outside of any radius
-
+# Calculate "Test score Accuracy"
+# Rated from (0, 1), Asssociates guesses to closest true circles inside radius, losing percentage based on distance from center to edge.
+# Additional Penalty for guesses outside of any radius
+def calculate_error(radius, true_point_list, circles):
     # Get all distances
     p1 = np.array(true_point_list)
     p2 = np.array(circles)
@@ -96,7 +87,22 @@ if __name__ == "__main__":
         else:
             points -= 1 # Penalty for guesses not in radius
     points = max(0,points / len(true_point_list)) # Scale the score such that it is in range 0-1s
+    return points
+if __name__ == "__main__":
+    # Testing Parameters
+    radius = 10
+    point_count = 5
+    image_size = (100,100)
+    true_point_list,image = create_random_dot_image(image_size, radius, point_count)
+
+    # Actual detection
+    circles = get_circles(image,radius)
+
+    # Calculate accuracy
+    points = calculate_error(radius, true_point_list, circles)
     print("Psudo-Accuracy:",points)
+    
     # Display resulting circles
-    dot_image(image,circles,1,inner_color=(255,0,0,255),outer_color=(255,0,0,255))
+    dot_image(image,circles,2,inner_color=(255,0,0,255),outer_color=(255,0,0,255))
     image.show()
+    image.save("dots-image.PNG")
